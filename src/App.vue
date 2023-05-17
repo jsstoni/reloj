@@ -18,7 +18,7 @@
       <label for="">Indica la fecha del lanzamiento</label>
       <input type="text" v-model="selectHour" v-date />
       <p v-for="(country, i) in otherCountry" :key="i">
-        <span>{{ country.emoji }}</span> {{ country.date }} - {{ country.name }}
+        {{ country.date }} <span v-for="(flag, index) in country.countrys" :key="index">{{ flag.emoji }} </span>
       </p>
     </div>
   </main>
@@ -163,17 +163,28 @@ export default {
       });
       const hours = new Date(date).getHours();
       const minutes = new Date(date).getMinutes().toString().padStart(2, 0);
-      return `${hours}:${minutes}`;
+      return { hours, minutes };
     };
 
     const otherCountry = computed(() => {
       if (selectHour.value) {
         return countrys
           .map((e) => {
-            const date = setTimeLocale(selectHour.value, e.iana);
+            const localTime = setTimeLocale(selectHour.value, e.iana);
+            const date = `${localTime.hours}:${localTime.minutes}`;
             return { date, ...e };
           })
-          .filter((e) => countrySelected.value.includes(e.iso));
+          .filter((e) => countrySelected.value.includes(e.iso))
+          .reduce((acc, e) => {
+            const date = e.date;
+            const existingItem = acc.find((item) => item.date === date);
+            if (existingItem) {
+              existingItem.countrys.push({ ...e });
+            } else {
+              acc.push({ date, countrys: [{ ...e }] });
+            }
+            return acc;
+          }, []);
       }
       return [];
     });
